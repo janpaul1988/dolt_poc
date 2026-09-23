@@ -12,8 +12,6 @@ dependencies {
     implementation("com.mysql:mysql-connector-j:9.0.0")
     implementation("com.h2database:h2:2.2.224")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.13")
-
-    testImplementation("com.h2database:h2:2.2.224")
 }
 
 tasks.register<JavaExec>("runExposedDemo") {

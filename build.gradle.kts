@@ -1,5 +1,5 @@
 // Root project: no code of its own - just shared configuration for the three real modules
-// (models, backend, frontend). See README.md for what each module contains and how to run them.
+// (backend, frontend, run). See README.md for what each module contains and how to run them.
 
 plugins {
     kotlin("jvm") version "2.4.20" apply false
@@ -22,7 +22,9 @@ subprojects {
     }
 
     dependencies {
-        "testImplementation"(kotlin("test"))
+        "testImplementation"(platform("io.kotest:kotest-bom:5.9.1"))
+        "testImplementation"("io.kotest:kotest-runner-junit5")
+        "testImplementation"("io.kotest:kotest-assertions-core")
     }
 
     tasks.withType<Test> {

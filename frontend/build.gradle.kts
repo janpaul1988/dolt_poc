@@ -1,5 +1,5 @@
 // :frontend - Ktor HTML CRUD webapp. Talks only to :backend's DoltModelConfigService; it never
-// opens a JDBC connection or touches :models' table definitions directly.
+// opens a JDBC connection or touches the Exposed table definitions directly.
 
 plugins {
     application

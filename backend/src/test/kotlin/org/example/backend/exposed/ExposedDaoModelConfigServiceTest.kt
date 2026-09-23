@@ -1,41 +1,41 @@
 package org.example.backend.exposed
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
 
-class ExposedDaoModelConfigServiceTest {
+class ExposedDaoModelConfigServiceTest : FunSpec({
 
-    private val service = ExposedDaoModelConfigService(
+    fun newService() = ExposedDaoModelConfigService(
         "jdbc:h2:mem:test-exposed-dao-${System.nanoTime()};DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM 'classpath:schema.sql'"
     )
 
-    @Test
-    fun `save then findAll and findById round-trip`() {
+    test("save then findAll and findById round-trip") {
+        val service = newService()
         service.save("qa-model", "azure", 0.3, 2048)
 
         val found = service.findById("qa-model")
-        assertEquals("azure", found?.provider)
-        assertEquals(0.3, found?.temperature)
-        assertEquals(2048, found?.maxTokens)
-        assertEquals(1, service.findAll().size)
+        found?.provider shouldBe "azure"
+        found?.temperature shouldBe 0.3
+        found?.maxTokens shouldBe 2048
+        service.findAll().map { it.id.value } shouldBe listOf("qa-model")
     }
 
-    @Test
-    fun `save upserts an existing row instead of duplicating it`() {
+    test("save upserts an existing row instead of duplicating it") {
+        val service = newService()
         service.save("qa-model", "azure", 0.3, 2048)
         service.save("qa-model", "azure-updated", 0.4, 4096)
 
-        assertEquals(1, service.findAll().size)
-        assertEquals("azure-updated", service.findById("qa-model")?.provider)
+        service.findAll().map { it.id.value } shouldBe listOf("qa-model")
+        service.findById("qa-model")?.provider shouldBe "azure-updated"
     }
 
-    @Test
-    fun `delete removes the row`() {
+    test("delete removes the row") {
+        val service = newService()
         service.save("qa-model", "azure", 0.3, 2048)
 
-        assertEquals(true, service.delete("qa-model"))
-        assertNull(service.findById("qa-model"))
-        assertEquals(false, service.delete("qa-model"))
+        service.delete("qa-model") shouldBe true
+        service.findById("qa-model").shouldBeNull()
+        service.delete("qa-model") shouldBe false
     }
-}
+})

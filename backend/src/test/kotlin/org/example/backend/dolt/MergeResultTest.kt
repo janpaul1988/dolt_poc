@@ -1,33 +1,27 @@
 package org.example.backend.dolt
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-class MergeResultTest {
+class MergeResultTest : FunSpec({
 
-    @Test
-    fun `fast forward merge is reported as such`() {
+    test("fast forward merge is reported as such") {
         val message = describeMergeResult("development", "main", fastForward = true, conflictingTables = emptyList())
-        assertEquals("Fast-forwarded 'main' to 'development'.", message)
+        message shouldBe "Fast-forwarded 'main' to 'development'."
     }
 
-    @Test
-    fun `three way merge without conflicts`() {
+    test("three way merge without conflicts") {
         val message = describeMergeResult("development", "main", fastForward = false, conflictingTables = emptyList())
-        assertEquals("Merged 'development' into 'main'.", message)
+        message shouldBe "Merged 'development' into 'main'."
     }
 
-    @Test
-    fun `conflicting merge lists the affected tables and does not claim a fast-forward`() {
+    test("conflicting merge lists the affected tables and does not claim a fast-forward") {
         val message = describeMergeResult(
             "development",
             "main",
             fastForward = false,
             conflictingTables = listOf("model_configs")
         )
-        assertEquals(
-            "Merge aborted: conflicts in model_configs. Resolve manually with the Dolt CLI, then retry.",
-            message
-        )
+        message shouldBe "Merge aborted: conflicts in model_configs. Resolve manually with the Dolt CLI, then retry."
     }
-}
+})

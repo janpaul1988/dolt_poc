@@ -1,39 +1,32 @@
 package org.example.frontend
 
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 import kotlinx.html.div
 import kotlinx.html.stream.createHTML
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
-class DiffCellTest {
+class DiffCellTest : FunSpec({
 
-    private fun render(from: String?, to: String?, diffType: String): String =
+    fun render(from: String?, to: String?, diffType: String): String =
         createHTML().div { diffCell(from, to, diffType) }.trim()
 
-    @Test
-    fun `added row shows only the new value`() {
+    test("added row shows only the new value") {
         val html = render(from = null, to = "openai", diffType = "added")
-        assertEquals("""<div><span class="new">openai</span></div>""", html)
+        html shouldBe """<div><span class="new">openai</span></div>"""
     }
 
-    @Test
-    fun `removed row shows only the old value`() {
+    test("removed row shows only the old value") {
         val html = render(from = "openai", to = null, diffType = "removed")
-        assertEquals("""<div><span class="old">openai</span></div>""", html)
+        html shouldBe """<div><span class="old">openai</span></div>"""
     }
 
-    @Test
-    fun `modified row shows old and new values with an arrow`() {
+    test("modified row shows old and new values with an arrow") {
         val html = render(from = "openai", to = "azure", diffType = "modified")
-        assertEquals(
-            """<div><span class="old">openai</span><span class="arrow"> -&gt; </span><span class="new">azure</span></div>""",
-            html
-        )
+        html shouldBe """<div><span class="old">openai</span><span class="arrow"> -&gt; </span><span class="new">azure</span></div>"""
     }
 
-    @Test
-    fun `unchanged value renders as plain text`() {
+    test("unchanged value renders as plain text") {
         val html = render(from = "openai", to = "openai", diffType = "modified")
-        assertEquals("<div>openai</div>", html)
+        html shouldBe "<div>openai</div>"
     }
-}
+})

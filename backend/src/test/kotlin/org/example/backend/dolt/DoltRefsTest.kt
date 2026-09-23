@@ -1,26 +1,23 @@
 package org.example.backend.dolt
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-class DoltRefsTest {
+class DoltRefsTest : FunSpec({
 
-    @Test
-    fun `sanitize passes through a plain branch or tag name`() {
-        assertEquals("development", DoltRefs.sanitize("development"))
-        assertEquals("v1.0", DoltRefs.sanitize("v1.0"))
+    test("sanitize passes through a plain branch or tag name") {
+        DoltRefs.sanitize("development") shouldBe "development"
+        DoltRefs.sanitize("v1.0") shouldBe "v1.0"
     }
 
-    @Test
-    fun `sanitize rejects blank refs`() {
-        assertFailsWith<IllegalArgumentException> { DoltRefs.sanitize("") }
-        assertFailsWith<IllegalArgumentException> { DoltRefs.sanitize("   ") }
+    test("sanitize rejects blank refs") {
+        shouldThrow<IllegalArgumentException> { DoltRefs.sanitize("") }
+        shouldThrow<IllegalArgumentException> { DoltRefs.sanitize("   ") }
     }
 
-    @Test
-    fun `sanitize rejects refs that could break out of the qualified database name`() {
-        assertFailsWith<IllegalArgumentException> { DoltRefs.sanitize("main`; DROP TABLE model_configs; --") }
-        assertFailsWith<IllegalArgumentException> { DoltRefs.sanitize("has space") }
+    test("sanitize rejects refs that could break out of the qualified database name") {
+        shouldThrow<IllegalArgumentException> { DoltRefs.sanitize("main`; DROP TABLE model_configs; --") }
+        shouldThrow<IllegalArgumentException> { DoltRefs.sanitize("has space") }
     }
-}
+})

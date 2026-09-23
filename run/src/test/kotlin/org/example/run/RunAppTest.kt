@@ -1,14 +1,13 @@
 package org.example.run
 
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 import org.example.backend.exposed.ExposedDaoModelConfigService
 import org.example.backend.exposed.ExposedModelConfigService
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
-class RunAppTest {
+class RunAppTest : FunSpec({
 
-    @Test
-    fun `backend demo exercises both Exposed services end to end without throwing`() {
+    test("backend demo exercises both Exposed services end to end without throwing") {
         val dsl = ExposedModelConfigService(
             "jdbc:h2:mem:test-run-dsl-${System.nanoTime()};DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM 'classpath:schema.sql'"
         )
@@ -19,7 +18,7 @@ class RunAppTest {
         runBackendDemo(dsl, dao)
 
         // The demo creates then deletes the same row on each service, so both end up empty.
-        assertEquals(emptyList(), dsl.findAll())
-        assertEquals(emptyList(), dao.findAll())
+        dsl.findAll() shouldBe emptyList()
+        dao.findAll() shouldBe emptyList()
     }
-}
+})

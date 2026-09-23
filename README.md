@@ -166,6 +166,9 @@ You can also run each piece independently if you only want one of them:
 
 ## Running the tests
 
+Every module is tested with [Kotest](https://kotest.io) (`FunSpec` style, `shouldBe`/`shouldThrow`
+assertions) on the JUnit 5 platform - no JUnit annotations or `kotlin-test` anywhere in the repo.
+
 ```bash
 ./gradlew test
 ```
