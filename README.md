@@ -18,9 +18,9 @@ the data itself - rather than to be a production-ready app.
 
 | Module | Contains | Depends on |
 |---|---|---|
-| `backend` | Exposed `Table`/`IdTable`/DAO definitions for `model_configs` and the shared Dolt domain types (`CommitRow`, `BranchRow`, `TagRow`, `DiffRow`, `CheckoutState`, ...), plus the services built on them: a small in-memory H2 smoke test of Exposed's DSL and DAO APIs (`org.example.backend.exposed`), and the real Dolt version-control service the web app uses (`org.example.backend.dolt.DoltModelConfigService`). | - |
+| `backend` | Exposed `Table`/`IdTable`/DAO definitions for `model_configs` and the shared Dolt domain types (`CommitRow`, `BranchRow`, `TagRow`, `DiffRow`, `CheckoutState`, ...), plus the Dolt version-control service the web app uses (`org.example.backend.dolt.DoltModelConfigService`). This is the app's only data-access layer. | - |
 | `frontend` | The Ktor HTML CRUD web app (`org.example.frontend.DoltWebApp`). Talks only to `backend`'s `DoltModelConfigService` - it never opens a JDBC connection itself. | `backend` |
-| `run` | The single entry point that ties `backend` and `frontend` together: runs the backend's Exposed smoke test, then starts the frontend web app - one command boots the whole thing. | `backend`, `frontend` |
+| `run` | The single entry point that ties `backend` and `frontend` together: prepares the Dolt branches the app expects, then starts the frontend web app - one command boots the whole thing. | `backend`, `frontend` |
 
 Every module has its own unit tests (`./gradlew test` runs all of them; see below for what each
 suite covers).
@@ -28,8 +28,7 @@ suite covers).
 ### How Dolt access uses Exposed
 
 - Plain CRUD (`model_configs`) uses Exposed's typed DSL against `org.example.models.ModelConfigsTable`
-  (part of `backend`) - the same table definition the H2 smoke test uses, just pointed at a Dolt
-  connection instead.
+  (part of `backend`), pointed at the running Dolt server.
 - Dolt's version-control system tables/procedures have no typed Exposed API, so those go through
   Exposed's `Transaction.exec()` raw-SQL escape hatch (with bound parameters, not string
   concatenation) - still routed through Exposed's connection/transaction management, just without
@@ -42,12 +41,13 @@ suite covers).
 ## Prerequisites
 
 - JDK 24 (the Gradle toolchain will provision this automatically if it's missing)
-- [Dolt](https://docs.dolthub.com/introduction/installation) CLI, for the Dolt demo only
+- [Dolt](https://docs.dolthub.com/introduction/installation) CLI - the app has no data store of
+  its own, so a running Dolt server is required
 - Optionally, a MySQL client, to poke at the running Dolt server by hand
 
-Nothing else needs installing - the Exposed/H2 demo is fully embedded (no server process), and
 Dolt's SQL server speaks the plain MySQL wire protocol, so the app talks to it with an ordinary
-MySQL JDBC driver (via Exposed).
+MySQL JDBC driver (via Exposed) - no other database or embedded store is involved anywhere in
+this repo.
 
 ### Installing Dolt
 
@@ -142,15 +142,14 @@ the server is running - stopping the server does not delete or reset any data.
 
 ## Running the app
 
-With the Dolt server running (see above), start everything - the backend's Exposed smoke test and
-the frontend web app (the actual POC) - with one command:
+With the Dolt server running (see above), start the whole app - branch setup plus the frontend
+web app - with one command:
 
 ```bash
 ./gradlew :run:runApp
 ```
 
-This prints the backend's Exposed smoke test output, then starts the Ktor frontend on
-http://localhost:8080. From there you can:
+This starts the Ktor frontend on http://localhost:8080. From there you can:
 - edit rows and review the pending diff before committing,
 - browse full commit history, scoped to whatever branch/tag/commit is currently checked out,
 - switch between the `main` (protected, read-only) and `development` (writable) branches,
@@ -159,11 +158,10 @@ http://localhost:8080. From there you can:
 - merge `development` into `main` (conflicts abort the merge and are reported, rather than
   crashing the app).
 
-You can also run each piece independently if you only want one of them:
+`:frontend:runDoltWeb` also exists as a Ktor-only alias for the same thing, if you prefer:
 
 ```bash
-./gradlew :backend:runExposedDemo   # just the Exposed smoke test (no Dolt server needed)
-./gradlew :frontend:runDoltWeb      # just the Dolt web app - the actual POC (needs the Dolt server running)
+./gradlew :frontend:runDoltWeb      # needs the Dolt server running
 ```
 
 ## Running the tests
@@ -176,11 +174,11 @@ assertions) on the JUnit 5 platform - no JUnit annotations or `kotlin-test` anyw
 ```
 
 This runs every module's suite:
-- `backend`: table/column definitions and `CheckoutState` label logic; full CRUD round-trips for
-  the H2 smoke test's DSL and DAO services (against in-memory H2); pure-logic tests for the Dolt
-  service's ref validation and merge-outcome message formatting (no live Dolt server required).
+- `backend`: table/column definitions and `CheckoutState` label logic; pure-logic tests for the
+  Dolt service's ref validation and merge-outcome message formatting (no live Dolt server
+  required).
 - `frontend`: HTML rendering of the diff/change indicators used in the "pending changes" screen.
-- `run`: the combined backend demo runs end-to-end against isolated in-memory H2 databases
-  without throwing.
+- `run`: has no tests of its own - its `main()` only wires up the Dolt service and starts the
+  server, both of which are exercised by `backend`/`frontend`'s tests and the app itself.
 
 You can also run a single module's tests, e.g. `./gradlew :backend:test`.

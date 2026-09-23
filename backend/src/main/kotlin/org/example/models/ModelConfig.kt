@@ -3,9 +3,9 @@ package org.example.models
 import org.jetbrains.exposed.sql.Table
 
 /**
- * Exposed DSL table definition for the single `model_configs` table shared by every CRUD
- * backend in this repo (the H2 demos and the Dolt-backed service alike) - one plain Kotlin
- * object describing the columns, no annotations, no XML persistence unit.
+ * Exposed DSL table definition for the single `model_configs` table used by the Dolt-backed
+ * CRUD service - one plain Kotlin object describing the columns, no annotations, no XML
+ * persistence unit.
  */
 object ModelConfigsTable : Table("model_configs") {
     val id = varchar("id", 100)
