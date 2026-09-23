@@ -1,18 +1,40 @@
 # aitester
 
-Two CRUD demos against the same flat `model_configs` table, showing two different Kotlin
-data-access styles:
+A small multi-module Kotlin project with two CRUD demos against the same flat `model_configs`
+table, showing two different Kotlin data-access styles - and, for the more interesting one, a
+full Dolt version-control workflow (branches, tags, merges, commit history) on top of Exposed.
 
-| Demo | Package | Storage | Run with |
-|---|---|---|---|
-| Exposed (Kotlin SQL DSL + DAO) | `org.example.db.exposed` | H2, file-based | `./gradlew runExposedDemo` |
-| Dolt (versioned SQL, HTML CRUD) | `org.example.dolt` | [Dolt](https://www.dolthub.com/) (MySQL wire-compatible) | `./gradlew runDoltWeb` |
+## Modules
 
-The Dolt demo is the interesting one: it's a small Ktor web app that lets you edit rows, review
-the change as a diff before committing, browse history, switch between `main`/`development`
-branches, tag `main`, and merge `development` into `main` - all backed by Dolt's version-control
-system tables (`dolt_status`, `dolt_diff_*`, `dolt_log`, `dolt_branches`, `dolt_tags`) and stored
-procedures (`DOLT_COMMIT`, `DOLT_MERGE`, `DOLT_TAG`, ...).
+| Module | Contains | Depends on |
+|---|---|---|
+| `models` | Exposed `Table`/`IdTable`/DAO definitions for `model_configs`, plus the shared Dolt domain types (`CommitRow`, `BranchRow`, `TagRow`, `DiffRow`, `CheckoutState`, ...). No I/O. | - |
+| `backend` | CRUD services: the H2-backed Exposed DSL/DAO demo (`org.example.backend.exposed`), and the Exposed-backed Dolt version-control service (`org.example.backend.dolt.DoltModelConfigService`). | `models` |
+| `frontend` | The Ktor HTML CRUD web app (`org.example.frontend.DoltWebApp`). Talks only to `backend`'s `DoltModelConfigService` - it never opens a JDBC connection itself. | `backend` (-> `models`) |
+
+Every module has its own unit tests (`./gradlew test` runs all of them; see below for what each
+suite covers).
+
+The Dolt demo (`frontend` + `backend`) is the interesting one: it's a small Ktor web app that lets
+you edit rows, review the change as a diff before committing, browse history scoped to whatever
+is checked out, switch between `main`/`development` branches, tag `main`, merge `development` into
+`main`, and check out any branch, tag, or raw commit hash (as a read-only "detached HEAD") - all
+backed by Dolt's version-control system tables (`dolt_status`, `dolt_diff_*`, `dolt_log`,
+`dolt_branches`, `dolt_tags`) and stored procedures (`DOLT_COMMIT`, `DOLT_MERGE`, `DOLT_TAG`, ...),
+issued through Exposed rather than raw JDBC.
+
+### How Dolt access uses Exposed
+
+- Plain CRUD (`model_configs`) uses Exposed's typed DSL against `models.ModelConfigsTable` -
+  identical table definition to the H2 demo, just pointed at a Dolt connection instead.
+- Dolt's version-control system tables/procedures have no typed Exposed API, so those go through
+  Exposed's `Transaction.exec()` raw-SQL escape hatch (with bound parameters, not string
+  concatenation) - still routed through Exposed's connection/transaction management, just without
+  the DSL layer.
+- Dolt lets you address a branch, tag, or commit directly as part of the database name
+  (`doltdb/<ref>`), so instead of relying on a stateful `DOLT_CHECKOUT` (which only lives for the
+  one JDBC connection that ran it), each transaction connects to a fresh Exposed `Database` handle
+  whose JDBC URL already embeds the currently checked-out ref.
 
 ## Prerequisites
 
@@ -22,7 +44,7 @@ procedures (`DOLT_COMMIT`, `DOLT_MERGE`, `DOLT_TAG`, ...).
 
 Nothing else needs installing - the Exposed/H2 demo is fully embedded (no server process), and
 Dolt's SQL server speaks the plain MySQL wire protocol, so the app talks to it with an ordinary
-MySQL JDBC driver.
+MySQL JDBC driver (via Exposed).
 
 ### Installing Dolt
 
@@ -120,18 +142,35 @@ the server is running - stopping the server does not delete or reset any data.
 With the Dolt server running (see above):
 
 ```bash
-./gradlew runDoltWeb
+./gradlew :frontend:runDoltWeb
 ```
 
 Then open http://localhost:8080. From there you can:
 - edit rows and review the pending diff before committing,
-- browse full commit history and check out any commit (detached HEAD, read-only),
+- browse full commit history, scoped to whatever branch/tag/commit is currently checked out,
 - switch between the `main` (protected, read-only) and `development` (writable) branches,
+- check out a tag or a raw commit hash, entering a read-only "detached HEAD" state,
 - tag `main` with a custom label (e.g. `1.0`),
-- merge `development` into `main`.
+- merge `development` into `main` (conflicts abort the merge and are reported, rather than
+  crashing the app).
 
 The Exposed/H2 demo needs no separate server:
 
 ```bash
-./gradlew runExposedDemo   # Exposed DSL + DAO CRUD smoke test
+./gradlew :backend:runExposedDemo   # Exposed DSL + DAO CRUD smoke test
 ```
+
+## Running the tests
+
+```bash
+./gradlew test
+```
+
+This runs every module's suite:
+- `models`: table/column definitions and `CheckoutState` label logic.
+- `backend`: full CRUD round-trips for both the DSL and DAO H2 services (against in-memory H2),
+  plus pure-logic tests for the Dolt service's ref validation and merge-outcome message
+  formatting (no live Dolt server required).
+- `frontend`: HTML rendering of the diff/change indicators used in the "pending changes" screen.
+
+You can also run a single module's tests, e.g. `./gradlew :backend:test`.
