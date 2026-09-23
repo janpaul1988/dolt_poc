@@ -13,6 +13,10 @@ data/
 # and doltdb/*.sql (schema/seed scripts) tracked.
 doltdb/.dolt/
 doltdb/.doltcfg/
+# `dolt sql-server` also regenerates these at the repo root if run from here without
+# -r/--config flags (default config template + privileges db) - not source, not needed.
+/.doltcfg/
+/config.yaml
 
 ### IntelliJ IDEA ###
 *.iws
