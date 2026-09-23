@@ -10,8 +10,8 @@ import org.jetbrains.exposed.dao.id.IdTable
  * mapping that the plain DSL version needed (no `toRow()`, no per-field `it[column] = value`
  * assignment blocks): properties on [ModelConfigDao] read/write the underlying row directly via
  * delegation, and [ModelConfigDao.Companion] (an [EntityClass]) gives you `all()`, `findById()`,
- * `new { }` for free - the closest Exposed gets to "JPA-style" ergonomics while staying a plain
- * Kotlin object with no annotations/proxies/bytecode weaving.
+ * `new { }` for free - Exposed's most "object-oriented" API, while staying a plain Kotlin object
+ * with no annotations/proxies/bytecode weaving.
  */
 object ModelConfigsIdTable : IdTable<String>("model_configs") {
     override val id = varchar("id", 100).entityId()

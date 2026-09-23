@@ -4,6 +4,15 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### Runtime data (regenerated locally, not source) ###
+# H2 database files used by the JPA and Exposed CRUD demos.
+data/
+# Dolt's own local repository/version-control state and server runtime config -
+# regenerate with `dolt init` + schema, see README.md. Keep doltdb/config.yaml (server config)
+# and doltdb/*.sql (schema/seed scripts) tracked.
+doltdb/.dolt/
+doltdb/.doltcfg/
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml

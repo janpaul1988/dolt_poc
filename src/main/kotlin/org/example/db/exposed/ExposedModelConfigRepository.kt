@@ -9,10 +9,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 
 /**
- * Compare this whole file to [org.example.db.ModelConfigRepository] +
- * [org.example.db.ModelConfigEntity] + `persistence.xml`: no entity manager factory, no
- * annotations, no XML, no separate mapping layer - just a typed SQL DSL that reads almost like
- * the SQL itself. Each CRUD method is a one-line `transaction { ... }` block.
+ * Repository built on Exposed's SQL DSL: a typed query builder that reads almost like the SQL
+ * itself, with no entity manager, annotations, or separate mapping layer. Each CRUD method is a
+ * one-line `transaction { ... }` block. Compare to [ExposedDaoModelConfigRepository], which uses
+ * Exposed's higher-level DAO API for the same table.
  */
 class ExposedModelConfigRepository(jdbcUrl: String = "jdbc:h2:file:./data/config-exposed;INIT=RUNSCRIPT FROM 'classpath:schema.sql'") {
     private val db = Database.connect(jdbcUrl, driver = "org.h2.Driver", user = "sa", password = "")
@@ -25,7 +25,7 @@ class ExposedModelConfigRepository(jdbcUrl: String = "jdbc:h2:file:./data/config
         ModelConfigsTable.selectAll().where { ModelConfigsTable.id eq id }.singleOrNull()?.toRow()
     }
 
-    /** Insert or update (upsert) - mirrors [org.example.db.ModelConfigRepository.save]. */
+    /** Insert or update (upsert). */
     fun save(row: ModelConfigRow): ModelConfigRow = transaction(db) {
         val updated = ModelConfigsTable.update({ ModelConfigsTable.id eq row.id }) {
             it[provider] = row.provider

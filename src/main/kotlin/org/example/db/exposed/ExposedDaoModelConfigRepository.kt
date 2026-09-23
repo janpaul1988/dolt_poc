@@ -7,8 +7,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
  * Compare each method here to its DSL counterpart in [ExposedModelConfigRepository]: no
  * `toRow()` mapping function, no `it[column] = value` assignment blocks, no manual "update, and
  * if 0 rows were touched then insert" upsert logic - [org.jetbrains.exposed.dao.EntityClass]
- * gives you `findById`/`new`/property assignment directly, much closer in shape to the JPA
- * version but still without annotations, an XML persistence unit, or an EntityManagerFactory.
+ * gives you `findById`/`new`/property assignment directly, letting the entity read like a plain
+ * mutable object.
  */
 class ExposedDaoModelConfigRepository(jdbcUrl: String = "jdbc:h2:file:./data/config-exposed-dao;INIT=RUNSCRIPT FROM 'classpath:schema.sql'") {
     private val db = Database.connect(jdbcUrl, driver = "org.h2.Driver", user = "sa", password = "")

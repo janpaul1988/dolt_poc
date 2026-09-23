@@ -1,18 +1,10 @@
 plugins {
     kotlin("jvm") version "2.4.20"
     application
-    kotlin("plugin.jpa") version "2.4.20"
 }
 
 application {
-    mainClass.set("org.example.MainKt")
-}
-
-tasks.register<JavaExec>("runJacksonDemo") {
-    group = "application"
-    description = "Runs the Jackson-based YAML loading demo, side by side with the reflection MapMapper."
-    mainClass.set("org.example.yaml.JacksonDemoKt")
-    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.example.dolt.DoltWebAppKt")
 }
 
 tasks.register<JavaExec>("runDoltWeb") {
@@ -24,7 +16,7 @@ tasks.register<JavaExec>("runDoltWeb") {
 
 tasks.register<JavaExec>("runExposedDemo") {
     group = "application"
-    description = "Runs the Exposed (Kotlin-native SQL DSL) CRUD demo, side by side with the JPA/Hibernate one."
+    description = "Runs the Exposed (Kotlin-native SQL DSL + DAO) CRUD demo."
     mainClass.set("org.example.db.exposed.ExposedDemoKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
@@ -37,19 +29,10 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("reflect"))
-    implementation("org.yaml:snakeyaml:2.2")
-
-    // Jackson-based YAML mapping, for comparison against the hand-rolled MapMapper.
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.2")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.2")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
-
-    implementation("org.hibernate.orm:hibernate-core:6.6.2.Final")
     implementation("com.h2database:h2:2.2.224")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.13")
 
-    // JetBrains Exposed - Kotlin-native SQL DSL, for comparison against JPA/Hibernate.
+    // JetBrains Exposed - Kotlin-native SQL DSL + DAO, backed by H2.
     implementation("org.jetbrains.exposed:exposed-core:0.55.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.55.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.55.0")

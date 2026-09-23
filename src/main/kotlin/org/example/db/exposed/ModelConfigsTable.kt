@@ -3,10 +3,9 @@ package org.example.db.exposed
 import org.jetbrains.exposed.sql.Table
 
 /**
- * Exposed's equivalent of the flat `schema.sql` + [org.example.db.ModelConfigEntity] pair:
- * one plain Kotlin object describing the table, no annotations, no XML persistence unit.
- * Points at the *same* schema.sql, so this is genuinely the same table as the JPA version -
- * just accessed through a different, Kotlin-native API.
+ * Exposed's equivalent of a flat SQL table definition: one plain Kotlin object describing the
+ * columns, no annotations, no XML persistence unit - just a typed table definition backed by
+ * `schema.sql`.
  */
 object ModelConfigsTable : Table("model_configs") {
     val id = varchar("id", 100)
