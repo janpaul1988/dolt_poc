@@ -1,32 +1,34 @@
 # dolt_poc
 
-A small multi-module Kotlin project with two CRUD demos against the same flat `model_configs`
-table, showing two different Kotlin data-access styles - and, for the more interesting one, a
-full Dolt version-control workflow (branches, tags, merges, commit history) on top of Exposed.
+A small proof-of-concept Kotlin project showing how you could centralize management of a
+database's data through a CRUD web app - with full version control (branches, tags, merges,
+commit history) instead of just plain rows. All data access, throughout the project, goes through
+[Exposed](https://github.com/JetBrains/Exposed) - there is only one data-access approach here, not
+several competing ones.
+
+The centerpiece is a small Ktor web app backed by [Dolt](https://www.dolthub.com/) (a
+MySQL-compatible, Git-like versioned database): you edit rows, review the change as a diff before
+committing, browse history scoped to whatever is checked out, switch between `main`/`development`
+branches, tag `main`, merge `development` into `main`, and check out any branch, tag, or raw commit
+hash (as a read-only "detached HEAD"). The idea is to demonstrate the shape of a "data as code"
+workflow - the same kind of review/branch/merge discipline you'd use for source code, applied to
+the data itself - rather than to be a production-ready app.
 
 ## Modules
 
 | Module | Contains | Depends on |
 |---|---|---|
-| `backend` | Exposed `Table`/`IdTable`/DAO definitions for `model_configs` and the shared Dolt domain types (`CommitRow`, `BranchRow`, `TagRow`, `DiffRow`, `CheckoutState`, ...), plus the CRUD services built on them: the H2-backed Exposed DSL/DAO demo (`org.example.backend.exposed`) and the Exposed-backed Dolt version-control service (`org.example.backend.dolt.DoltModelConfigService`). | - |
+| `backend` | Exposed `Table`/`IdTable`/DAO definitions for `model_configs` and the shared Dolt domain types (`CommitRow`, `BranchRow`, `TagRow`, `DiffRow`, `CheckoutState`, ...), plus the services built on them: a small in-memory H2 smoke test of Exposed's DSL and DAO APIs (`org.example.backend.exposed`), and the real Dolt version-control service the web app uses (`org.example.backend.dolt.DoltModelConfigService`). | - |
 | `frontend` | The Ktor HTML CRUD web app (`org.example.frontend.DoltWebApp`). Talks only to `backend`'s `DoltModelConfigService` - it never opens a JDBC connection itself. | `backend` |
-| `run` | The single entry point that ties `backend` and `frontend` together: runs the backend's Exposed DSL/DAO demo, then starts the frontend web app - one command boots the whole thing. | `backend`, `frontend` |
+| `run` | The single entry point that ties `backend` and `frontend` together: runs the backend's Exposed smoke test, then starts the frontend web app - one command boots the whole thing. | `backend`, `frontend` |
 
 Every module has its own unit tests (`./gradlew test` runs all of them; see below for what each
 suite covers).
 
-The Dolt demo (`frontend` + `backend`) is the interesting one: it's a small Ktor web app that lets
-you edit rows, review the change as a diff before committing, browse history scoped to whatever
-is checked out, switch between `main`/`development` branches, tag `main`, merge `development` into
-`main`, and check out any branch, tag, or raw commit hash (as a read-only "detached HEAD") - all
-backed by Dolt's version-control system tables (`dolt_status`, `dolt_diff_*`, `dolt_log`,
-`dolt_branches`, `dolt_tags`) and stored procedures (`DOLT_COMMIT`, `DOLT_MERGE`, `DOLT_TAG`, ...),
-issued through Exposed rather than raw JDBC.
-
 ### How Dolt access uses Exposed
 
 - Plain CRUD (`model_configs`) uses Exposed's typed DSL against `org.example.models.ModelConfigsTable`
-  (part of `backend`) - identical table definition to the H2 demo, just pointed at a Dolt
+  (part of `backend`) - the same table definition the H2 smoke test uses, just pointed at a Dolt
   connection instead.
 - Dolt's version-control system tables/procedures have no typed Exposed API, so those go through
   Exposed's `Transaction.exec()` raw-SQL escape hatch (with bound parameters, not string
@@ -140,14 +142,14 @@ the server is running - stopping the server does not delete or reset any data.
 
 ## Running the app
 
-With the Dolt server running (see above), start everything - the backend Exposed demo and the
-frontend web app - with one command:
+With the Dolt server running (see above), start everything - the backend's Exposed smoke test and
+the frontend web app (the actual POC) - with one command:
 
 ```bash
 ./gradlew :run:runApp
 ```
 
-This prints the backend's Exposed DSL/DAO CRUD smoke test output, then starts the Ktor frontend on
+This prints the backend's Exposed smoke test output, then starts the Ktor frontend on
 http://localhost:8080. From there you can:
 - edit rows and review the pending diff before committing,
 - browse full commit history, scoped to whatever branch/tag/commit is currently checked out,
@@ -160,8 +162,8 @@ http://localhost:8080. From there you can:
 You can also run each piece independently if you only want one of them:
 
 ```bash
-./gradlew :backend:runExposedDemo   # just the Exposed DSL + DAO CRUD smoke test (no Dolt server needed)
-./gradlew :frontend:runDoltWeb      # just the Dolt web app (needs the Dolt server running)
+./gradlew :backend:runExposedDemo   # just the Exposed smoke test (no Dolt server needed)
+./gradlew :frontend:runDoltWeb      # just the Dolt web app - the actual POC (needs the Dolt server running)
 ```
 
 ## Running the tests
@@ -175,8 +177,8 @@ assertions) on the JUnit 5 platform - no JUnit annotations or `kotlin-test` anyw
 
 This runs every module's suite:
 - `backend`: table/column definitions and `CheckoutState` label logic; full CRUD round-trips for
-  both the DSL and DAO H2 services (against in-memory H2); pure-logic tests for the Dolt service's
-  ref validation and merge-outcome message formatting (no live Dolt server required).
+  the H2 smoke test's DSL and DAO services (against in-memory H2); pure-logic tests for the Dolt
+  service's ref validation and merge-outcome message formatting (no live Dolt server required).
 - `frontend`: HTML rendering of the diff/change indicators used in the "pending changes" screen.
 - `run`: the combined backend demo runs end-to-end against isolated in-memory H2 databases
   without throwing.
