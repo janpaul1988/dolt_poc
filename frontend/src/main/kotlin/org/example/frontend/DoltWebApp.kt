@@ -113,7 +113,7 @@ private fun HTML.page(repo: DoltModelConfigService, flash: String? = null) {
     val tags = repo.tags()
 
     head {
-        title("aitester - model configs (Dolt)")
+        title("dolt_poc - model configs (Dolt)")
         style { unsafe { raw(CSS) } }
     }
     body {

@@ -1,6 +1,6 @@
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
-rootProject.name = "aitester"
+rootProject.name = "dolt_poc"
 
 include("backend", "frontend", "run")

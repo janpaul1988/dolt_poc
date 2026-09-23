@@ -1,4 +1,4 @@
-# aitester
+# dolt_poc
 
 A small multi-module Kotlin project with two CRUD demos against the same flat `model_configs`
 table, showing two different Kotlin data-access styles - and, for the more interesting one, a
