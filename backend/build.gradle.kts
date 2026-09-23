@@ -1,9 +1,12 @@
-// :backend - CRUD services on top of :models' table/DAO definitions: two H2-backed Exposed
-// demos (DSL vs DAO API) plus the Exposed-backed Dolt version-control service. No web
-// framework here - :frontend depends on this module and calls into it.
+// :backend - Exposed table/DAO definitions and domain types for `model_configs` plus the Dolt
+// version-control model (formerly the separate :models module, merged in here), and the CRUD
+// services built on top of them: two H2-backed Exposed demos (DSL vs DAO API) plus the
+// Exposed-backed Dolt version-control service. No web framework here - :frontend depends on
+// this module and calls into it.
 
 dependencies {
-    api(project(":models"))
+    api("org.jetbrains.exposed:exposed-core:0.55.0")
+    api("org.jetbrains.exposed:exposed-dao:0.55.0")
 
     implementation("org.jetbrains.exposed:exposed-jdbc:0.55.0")
     implementation("com.mysql:mysql-connector-j:9.0.0")

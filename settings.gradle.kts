@@ -3,4 +3,4 @@ plugins {
 }
 rootProject.name = "aitester"
 
-include("models", "backend", "frontend")
+include("backend", "frontend", "run")
