@@ -3,8 +3,7 @@
 A small proof-of-concept Kotlin project showing how you could centralize management of a
 database's data through a CRUD web app - with full version control (branches, tags, merges,
 commit history) instead of just plain rows. All data access, throughout the project, goes through
-[Exposed](https://github.com/JetBrains/Exposed) - there is only one data-access approach here, not
-several competing ones.
+[Exposed](https://github.com/JetBrains/Exposed) 
 
 The centerpiece is a small Ktor web app backed by [Dolt](https://www.dolthub.com/) (a
 MySQL-compatible, Git-like versioned database): you edit rows, review the change as a diff before
