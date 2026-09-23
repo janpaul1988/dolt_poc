@@ -1,0 +1,24 @@
+app:
+  name: aitester
+  version: "1.0.0"
+
+models:
+  - id: gpt-base
+    provider: openai
+    temperature: 0.2
+
+testSuites:
+  - name: smoke
+    tags: [ "fast" ]
+    prompts: [ "ping" ]
+
+retry:
+  maxAttempts: 3
+  initialDelay: 500ms
+  maxDelay: 30s
+  backoffMultiplier: 2.0
+
+thresholds:
+  minAccuracy: 0.8
+  maxLatencyMs: 2000
+  severity: MEDIUM

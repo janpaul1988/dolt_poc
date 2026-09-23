@@ -1,0 +1,19 @@
+app:
+  version: "1.1.0"
+
+models:
+  - id: gpt-large
+    provider: openai
+    temperature: 0.7
+    maxTokens: 4096
+
+testSuites:
+  - name: regression
+    tags: [ "slow", "nightly" ]
+    prompts: [ "long-context", "edge-cases" ]
+
+retry:
+  maxAttempts: 5
+
+thresholds:
+  severity: HIGH
