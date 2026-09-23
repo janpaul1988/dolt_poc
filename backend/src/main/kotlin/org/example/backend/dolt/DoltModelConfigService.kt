@@ -4,25 +4,25 @@ import org.example.models.BranchRow
 import org.example.models.CheckoutState
 import org.example.models.CommitRow
 import org.example.models.DiffRow
+import org.example.models.ModelConfigDao
 import org.example.models.ModelConfigRow
 import org.example.models.ModelConfigsTable
 import org.example.models.StatusRow
 import org.example.models.TagRow
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.VarCharColumnType
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 
 /**
  * Talks to a running `dolt sql-server` over the plain MySQL wire protocol, through Exposed.
  *
- * The CRUD half uses Exposed's typed DSL against [ModelConfigsTable] (shared with the H2 demos
- * in [org.example.backend.exposed]) - Dolt is MySQL-compatible, so the same table definition
- * works unchanged. The version-control half (`dolt_status`, `dolt_diff_*`, `dolt_log`,
+ * The CRUD half uses Exposed's DAO API against [ModelConfigDao] - Dolt is MySQL-compatible, so
+ * the same entity/table definition works unchanged. `all()`, `findById()` and `new { }` mean the
+ * service never manually assembles a [ModelConfigRow] column-by-column or writes an `it[column]
+ * = value` block; it just reads/writes properties on the entity object. The version-control half
+ * (`dolt_status`, `dolt_diff_*`, `dolt_log`,
  * `dolt_branches`, `dolt_tags`, and stored procedures like `DOLT_COMMIT`/`DOLT_MERGE`) has no
  * typed Exposed API, so those go through Exposed's `Transaction.exec()` raw-SQL escape hatch -
  * still routed through Exposed's connection/transaction management, just without the DSL layer.
@@ -71,33 +71,26 @@ class DoltModelConfigService(
     /** True while the current checkout cannot (or should not) be written to. */
     fun isReadOnly(): Boolean = state.detached || state.ref == mainBranch
 
-    // ---------- plain CRUD (Exposed DSL against the shared ModelConfigsTable) ----------
+    // ---------- plain CRUD (Exposed DAO against the shared ModelConfigDao entity) ----------
 
     fun findAll(): List<ModelConfigRow> = transaction(currentDatabase()) {
-        ModelConfigsTable.selectAll().orderBy(ModelConfigsTable.id).map {
-            ModelConfigRow(
-                id = it[ModelConfigsTable.id],
-                provider = it[ModelConfigsTable.provider],
-                temperature = it[ModelConfigsTable.temperature],
-                maxTokens = it[ModelConfigsTable.maxTokens]
-            )
-        }
+        ModelConfigDao.wrapRows(ModelConfigsTable.selectAll().orderBy(ModelConfigsTable.id, SortOrder.ASC))
+            .map { it.toRow() }
     }
 
     fun upsert(row: ModelConfigRow) {
         check(!isReadOnly()) { "Cannot write to '${state.label}'" }
         transaction(currentDatabase()) {
-            val updated = ModelConfigsTable.update({ ModelConfigsTable.id eq row.id }) {
-                it[provider] = row.provider
-                it[temperature] = row.temperature
-                it[maxTokens] = row.maxTokens
-            }
-            if (updated == 0) {
-                ModelConfigsTable.insert {
-                    it[id] = row.id
-                    it[provider] = row.provider
-                    it[temperature] = row.temperature
-                    it[maxTokens] = row.maxTokens
+            val existing = ModelConfigDao.findById(row.id)
+            if (existing != null) {
+                existing.provider = row.provider
+                existing.temperature = row.temperature
+                existing.maxTokens = row.maxTokens
+            } else {
+                ModelConfigDao.new(row.id) {
+                    provider = row.provider
+                    temperature = row.temperature
+                    maxTokens = row.maxTokens
                 }
             }
         }
@@ -106,7 +99,7 @@ class DoltModelConfigService(
     fun delete(id: String) {
         check(!isReadOnly()) { "Cannot write to '${state.label}'" }
         transaction(currentDatabase()) {
-            ModelConfigsTable.deleteWhere { ModelConfigsTable.id eq id }
+            ModelConfigDao.findById(id)?.delete()
         }
     }
 

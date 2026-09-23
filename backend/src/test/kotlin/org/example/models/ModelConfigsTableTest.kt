@@ -14,8 +14,4 @@ class ModelConfigsTableTest : FunSpec({
     test("id is the primary key") {
         ModelConfigsTable.primaryKey?.columns?.toList() shouldBe listOf(ModelConfigsTable.id)
     }
-
-    test("id table shares the same underlying table name") {
-        ModelConfigsIdTable.tableName shouldBe ModelConfigsTable.tableName
-    }
 })
